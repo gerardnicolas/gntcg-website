@@ -34,6 +34,9 @@ export default function CardDetail({
               <strong>Card Number:</strong> {card.no || '—'}
             </p>
             <p>
+              <strong>Card Type:</strong> {card.cardType || '—'}
+            </p>
+            <p>
               <strong>Rarity:</strong> {card.rarity || '—'}
             </p>
             <p>
