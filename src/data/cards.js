@@ -61,7 +61,8 @@ export const CARDS = [
     rarity: "Epic",
     price: 40,
     qty: 1,
-    img: "/images/jarvan_091_rad.webp"
+    img: "/images/jarvan_091_rad.webp",
+    desc: "Your gear with [Deploy] have [Action]. (They can be played on your turn or in showdowns.) When I conquer, if there is a friendly gear with [Deploy] here, channel 1 rune exhausted."
   },
   {
     id: 6,
@@ -73,7 +74,8 @@ export const CARDS = [
     rarity: "Epic",
     price: 650,
     qty: 1,
-    img: "/images/realmofdeath_144.webp"
+    img: "/images/realmofdeath_144.webp",
+    desc: "Give an enemy unit -2 Might this turn and a friendly unit +2 Might this turn. They deal damage equal to their Mights to each other."
   },
   {
     id: 7,
@@ -85,7 +87,8 @@ export const CARDS = [
     rarity: "Rare",
     price: 50,
     qty: 1,
-    img: "/images/nasus_063a.webp"
+    img: "/images/nasus_063a.webp",
+    desc: "Once each turn, when an enemy unit here dies, channel 1 rune exhausted."
   },
   {
     id: 8,
@@ -97,7 +100,8 @@ export const CARDS = [
     rarity: "Rare",
     price: 130,
     qty: 1,
-    img: "/images/zed_112a.webp"
+    img: "/images/zed_112a.webp",
+    desc: "When I conquer, play a 0 Might Shadow Clone unit token to your base. [ACTION] 1 and 1 Chaos: Move me and a Shadow Clone you control to each other's locations."
   },
   {
     id: 9,
@@ -109,7 +113,8 @@ export const CARDS = [
     rarity: "Showcase",
     price: 6000,
     qty: 1,
-    img: "/images/mordekaiser_showcase_170.webp"
+    img: "/images/mordekaiser_showcase_170.webp",
+    desc: "[Reaction] Banish a unit or gear from your trash, Exhaust: [Add] Rune. Spend this Power to play units or gear."
   },
   
 
