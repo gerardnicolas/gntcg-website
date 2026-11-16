@@ -5,7 +5,7 @@ export const CARDS = [
     id: 1,
     game: RB,
     name: "K'Sante, Pride of Nazumah (Overnumbered)",
-    cardType: "Unit",
+    cardType: "Legend",
     set: "Radiance",
     no: "172/167",
     rarity: "Showcase",
@@ -98,6 +98,18 @@ export const CARDS = [
     price: 130,
     qty: 1,
     img: "/images/zed_112a.webp"
+  },
+  {
+    id: 9,
+    game: RB,
+    name: "Mordekaiser, Iron Revenant (Overnumbered)",
+    cardType: "Legend",
+    set: "Radiance",
+    no: "170/167",
+    rarity: "Showcase",
+    price: 6000,
+    qty: 1,
+    img: "/images/mordekaiser_showcase_170.webp"
   },
   
 
