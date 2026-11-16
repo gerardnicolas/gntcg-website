@@ -23,7 +23,7 @@ export const CARDS = [
     no: "183/167",
     rarity: "Showcase",
     price: 3900,
-    qty: 1,
+    qty: 0,
     desc: "[TANK] I get +1 Might for each buffed friendly unit at my battlefield.",
     img: "/images/sett_showcase_rad.webp"
   },
