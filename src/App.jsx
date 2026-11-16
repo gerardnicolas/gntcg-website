@@ -1,11 +1,7 @@
-
 import { useEffect, useMemo, useState } from 'react';
 
 import CARDS from './data/cards';
-import {
-  CONFIG,
-  formatPrice,
-} from './utils/shop';
+import { CONFIG, formatPrice } from './utils/shop';
 
 import Header from './components/Header';
 import FilterBar from './components/FilterBar';
@@ -70,10 +66,9 @@ export default function App() {
 
   const sets = [
     ...new Set(
-      CARDS
-        .filter((card) => card.game === GAMES[activeGame]?.name)
+      CARDS.filter((card) => card.game === GAMES[activeGame]?.name)
         .map((card) => card.set)
-        .filter(Boolean)
+        .filter(Boolean),
     ),
   ];
 
@@ -109,14 +104,11 @@ export default function App() {
     })
     .filter(Boolean);
 
-  const totalItems = inquiryCards.reduce(
-    (sum, card) => sum + card.quantity,
-    0
-  );
+  const totalItems = inquiryCards.reduce((sum, card) => sum + card.quantity, 0);
 
   const totalPrice = inquiryCards.reduce(
     (sum, card) => sum + card.price * card.quantity,
-    0
+    0,
   );
 
   function notify(message) {
@@ -154,7 +146,7 @@ export default function App() {
   function createMessage() {
     const rows = inquiryCards.map(
       (card) =>
-        `- ${card.quantity}× ${card.name} (${card.game}, ${card.set}${card.no ? ' ' + card.no : ''}) — ${formatPrice(card.price * card.quantity)}`
+        `- ${card.quantity}× ${card.name} (${card.game}, ${card.set}${card.no ? ' ' + card.no : ''}) — ${formatPrice(card.price * card.quantity)}`,
     );
 
     return `Hi! I’m interested in these cards:\n${rows.join('\n')}\n\nTotal: ${formatPrice(totalPrice)}\nIs everything still available?`;
@@ -216,7 +208,7 @@ export default function App() {
             >
               {Object.entries(GAMES).map(([key, game]) => {
                 const count = CARDS.filter(
-                  (card) => card.game === game.name
+                  (card) => card.game === game.name,
                 ).length;
 
                 return (
@@ -230,10 +222,7 @@ export default function App() {
                         <>
                           <span className="rift-orbit orbit-one" />
                           <span className="rift-orbit orbit-two" />
-                          <img
-                            src="/images/sett_showcase_rad.webp"
-                            alt=""
-                          />
+                          <img src="/images/sett_showcase_rad.webp" alt="" />
                           <span className="art-caption">ENTER THE ARENA</span>
                         </>
                       ) : (
@@ -293,7 +282,9 @@ export default function App() {
           </main>
 
           <footer className="home-footer">
-            <span>GN TCG <span className="footer-dot">•</span> PHILIPPINES</span>
+            <span>
+              GN TCG <span className="footer-dot">•</span> PHILIPPINES
+            </span>
           </footer>
         </div>
       </div>
@@ -302,7 +293,7 @@ export default function App() {
 
   const currentGame = GAMES[activeGame];
   const availableCards = CARDS.filter(
-    (card) => card.game === currentGame.name
+    (card) => card.game === currentGame.name,
   ).length;
 
   return (
