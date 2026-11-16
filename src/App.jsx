@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import CARDS from './data/cards';
+import AdminDashboard from './components/AdminDashboard';
 import { CONFIG, formatPrice } from './utils/shop';
+import { mapDatabaseCard } from './lib/cards';
+import supabase from './lib/supabase';
 
 import Header from './components/Header';
 import FilterBar from './components/FilterBar';
@@ -31,11 +34,14 @@ function gameFromHash() {
   return hash === 'riftbound' || hash === 'braverse' ? hash : '';
 }
 
-export default function App() {
+function Storefront() {
   const [search, setSearch] = useState('');
   const [activeGame, setActiveGame] = useState(gameFromHash);
   const [selectedSet, setSelectedSet] = useState('');
   const [sort, setSort] = useState('new');
+  const [cards, setCards] = useState(supabase ? [] : CARDS);
+  const [catalogLoading, setCatalogLoading] = useState(Boolean(supabase));
+  const [catalogError, setCatalogError] = useState('');
 
   const [inquiry, setInquiry] = useState(() => {
     try {
@@ -48,6 +54,41 @@ export default function App() {
   const [selectedCard, setSelectedCard] = useState(null);
   const [showInquiry, setShowInquiry] = useState(false);
   const [toast, setToast] = useState('');
+
+  useEffect(() => {
+    if (!supabase) return undefined;
+
+    let active = true;
+
+    async function loadCards() {
+      try {
+        const { data, error } = await supabase
+          .from('cards')
+          .select('*')
+          .eq('is_published', true)
+          .order('id');
+
+        if (!active) return;
+        if (error) {
+          setCatalogError(error.message);
+        } else {
+          setCards(data.map(mapDatabaseCard));
+        }
+      } catch (error) {
+        if (!active) return;
+        setCatalogError(
+          error instanceof Error ? error.message : 'Something went wrong.',
+        );
+      } finally {
+        if (active) setCatalogLoading(false);
+      }
+    }
+
+    loadCards();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     function syncGameFromHash() {
@@ -66,7 +107,7 @@ export default function App() {
 
   const sets = [
     ...new Set(
-      CARDS.filter((card) => card.game === GAMES[activeGame]?.name)
+      cards.filter((card) => card.game === GAMES[activeGame]?.name)
         .map((card) => card.set)
         .filter(Boolean),
     ),
@@ -75,7 +116,7 @@ export default function App() {
   const filteredCards = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    const result = CARDS.filter((card) => {
+    const result = cards.filter((card) => {
       const matchesSearch =
         !query ||
         `${card.name} ${card.game} ${card.set} ${card.no || ''} ${card.rarity || ''}`
@@ -95,11 +136,11 @@ export default function App() {
 
       return b.id - a.id;
     });
-  }, [search, activeGame, selectedSet, sort]);
+  }, [cards, search, activeGame, selectedSet, sort]);
 
   const inquiryCards = Object.entries(inquiry)
     .map(([id, quantity]) => {
-      const card = CARDS.find((item) => item.id === Number(id));
+      const card = cards.find((item) => String(item.id) === id);
       return card ? { ...card, quantity } : null;
     })
     .filter(Boolean);
@@ -207,7 +248,7 @@ export default function App() {
               aria-label="Choose a game"
             >
               {Object.entries(GAMES).map(([key, game]) => {
-                const count = CARDS.filter(
+                const count = cards.filter(
                   (card) => card.game === game.name,
                 ).length;
 
@@ -335,11 +376,19 @@ export default function App() {
         sets={sets}
       />
 
+      {catalogError && (
+        <p className="catalog-error" role="alert">
+          Could not load cards from Supabase: {catalogError}
+        </p>
+      )}
+
       <CardGrid
         cards={filteredCards}
-        totalCards={availableCards}
+        totalCards={catalogLoading ? 0 : availableCards}
         emptyMessage={
-          availableCards === 0
+          catalogLoading
+            ? 'Loading cards…'
+            : availableCards === 0
             ? 'No cards listed for this game just yet. Check back soon.'
             : 'No cards match. Clear the search or pick a different set.'
         }
@@ -373,4 +422,12 @@ export default function App() {
       <Toast message={toast} />
     </>
   );
+}
+
+export default function App() {
+  if (window.location.pathname === '/admin' || window.location.pathname === '/admin/') {
+    return <AdminDashboard />;
+  }
+
+  return <Storefront />;
 }
