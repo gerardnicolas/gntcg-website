@@ -9,7 +9,7 @@ export const CARDS = [
     set: "Radiance",
     no: "172/167",
     rarity: "Showcase",
-    price: 2500,
+    price: 2200,
     qty: 1,
     desc: "1, Exhaust: Give a friendly unit \"I have [Assault] equal to my [Shield]\" this turn.",
     img: "/images/ksante_showcase_rad.webp"
@@ -22,7 +22,7 @@ export const CARDS = [
     set: "Radiance",
     no: "183/167",
     rarity: "Showcase",
-    price: 4500,
+    price: 3900,
     qty: 1,
     desc: "[TANK] I get +1 Might for each buffed friendly unit at my battlefield.",
     img: "/images/sett_showcase_rad.webp"
