@@ -541,12 +541,14 @@ footer a {
 
 .detail-art {
   display: block;
-  width: 100%;
-  max-width: 220px;
+  width: auto;
+  max-width: min(100%, 220px);
   height: 260px;
+  aspect-ratio: 5 / 7;
   object-fit: contain;
   margin: 0 auto 4px;
   border-radius: 8px;
+  background: var(--felt);
 }
 
 .image-placeholder {
