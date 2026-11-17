@@ -1444,6 +1444,122 @@ footer a {
   margin-bottom: 18px;
 }
 
+.admin-listing-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-listing-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.admin-listing-filters label {
+  display: grid;
+  gap: 6px;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.admin-listing-filters .admin-filter-search {
+  grid-column: span 2;
+}
+
+.admin-listing-filters input,
+.admin-listing-filters select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+
+.admin-listing-filters input:focus-visible,
+.admin-listing-filters select:focus-visible {
+  outline: 2px solid var(--ok);
+  outline-offset: 2px;
+}
+
+.admin-filter-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.admin-filter-summary p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.admin-bulk-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+}
+
+.admin-bulk-toolbar > p {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.admin-bulk-toolbar > p strong {
+  color: var(--ink);
+}
+
+.admin-bulk-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-bulk-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.admin-bulk-stock input {
+  width: 88px;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.admin-bulk-stock input:focus-visible,
+.admin-select-column input:focus-visible {
+  outline: 2px solid var(--ok);
+  outline-offset: 2px;
+}
+
 .admin-table-wrap {
   overflow-x: auto;
 }
@@ -1467,6 +1583,23 @@ footer a {
   padding: 12px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
+}
+
+.admin-select-column {
+  width: 42px;
+  text-align: center;
+}
+
+.admin-select-column input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--ok);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.admin-row-selected td {
+  background: rgba(36, 115, 77, 0.045);
 }
 
 .admin-card-cell {
@@ -1516,8 +1649,32 @@ footer a {
 
 .admin-row-actions {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
   white-space: nowrap;
+}
+
+.admin-row-actions .admin-text-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 68px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.admin-row-actions .admin-text-button:hover:not(:disabled) {
+  border-color: #9bb7a4;
+  background: var(--bg);
+}
+
+.admin-row-actions .admin-text-button:focus-visible {
+  outline: 2px solid var(--ok);
+  outline-offset: 2px;
 }
 
 .admin-text-button {
@@ -1531,6 +1688,15 @@ footer a {
 
 .admin-text-button.danger {
   color: #a53d2b;
+}
+
+.admin-row-actions .admin-text-button.danger {
+  border-color: rgba(165, 61, 43, 0.24);
+}
+
+.admin-row-actions .admin-text-button.danger:hover:not(:disabled) {
+  border-color: #a53d2b;
+  background: rgba(165, 61, 43, 0.08);
 }
 
 .admin-empty,
@@ -1552,6 +1718,15 @@ footer a {
     padding: 28px 14px;
   }
 
+  .admin-bulk-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-bulk-actions {
+    justify-content: flex-start;
+  }
+
   .admin-header {
     align-items: flex-start;
     flex-direction: column;
@@ -1571,6 +1746,31 @@ footer a {
 }
 
 @media (max-width: 560px) {
+  .admin-listings-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-listing-actions {
+    width: 100%;
+  }
+
+  .admin-bulk-actions {
+    width: 100%;
+  }
+
+  .admin-bulk-actions .admin-button {
+    flex: 1 1 auto;
+  }
+
+  .admin-listing-filters .admin-filter-search {
+    grid-column: auto;
+  }
+
+  .admin-filter-summary {
+    align-items: flex-start;
+  }
+
   .listing-page-heading {
     align-items: flex-start;
     flex-direction: column;

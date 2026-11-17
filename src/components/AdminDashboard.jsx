@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { mapDatabaseCard } from '../lib/cards';
 import supabase from '../lib/supabase';
@@ -6,6 +6,7 @@ import supabase from '../lib/supabase';
 const BUCKET = 'card-images';
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+const EMPTY_CARDS = [];
 
 const EMPTY_FORM = {
   game: 'Riftbound',
@@ -14,7 +15,7 @@ const EMPTY_FORM = {
   set: '',
   no: '',
   rarity: '',
-  price: '0',
+  price: '',
   qty: '1',
   desc: '',
   isPublished: true,
@@ -22,6 +23,52 @@ const EMPTY_FORM = {
 
 function messageFromError(error) {
   return error instanceof Error ? error.message : 'Something went wrong.';
+}
+
+function uniqueSorted(values) {
+  return [...new Set(values.filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b),
+  );
+}
+
+function csvCell(value) {
+  const text = String(value ?? '');
+  const safeText = /^[\t\r ]*[=+\-@]/.test(text) ? `'${text}` : text;
+  return `"${safeText.replace(/"/g, '""')}"`;
+}
+
+function downloadCardsCsv(cards) {
+  const columns = [
+    ['ID', (card) => card.id],
+    ['Game', (card) => card.game],
+    ['Name', (card) => card.name],
+    ['Card Type', (card) => card.cardType],
+    ['Set', (card) => card.set],
+    ['Card Number', (card) => card.no],
+    ['Rarity', (card) => card.rarity],
+    ['Price', (card) => card.price],
+    ['Quantity', (card) => card.qty],
+    ['Published', (card) => (card.isPublished ? 'Published' : 'Hidden')],
+    ['Description', (card) => card.desc],
+    ['Image Path', (card) => card.imagePath],
+  ];
+  const rows = [
+    columns.map(([label]) => csvCell(label)).join(','),
+    ...cards.map((card) =>
+      columns.map(([, getValue]) => csvCell(getValue(card))).join(','),
+    ),
+  ];
+  const csv = `\uFEFF${rows.join('\r\n')}`;
+  const url = URL.createObjectURL(
+    new Blob([csv], { type: 'text/csv;charset=utf-8' }),
+  );
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `gn-tcg-inventory-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function SetupNotice() {
@@ -338,6 +385,7 @@ function CardEditor({ card, onSave, onCancel, busy }) {
                         inputMode="decimal"
                         value={form.price}
                         onChange={(event) => update('price', event.target.value)}
+                        placeholder="0.00"
                         required
                       />
                     </span>
@@ -415,6 +463,17 @@ function ConnectedAdmin() {
   const [saving, setSaving] = useState(false);
   const [busyCardId, setBusyCardId] = useState(null);
   const [notice, setNotice] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [gameFilter, setGameFilter] = useState('');
+  const [setFilter, setSetFilter] = useState('');
+  const [rarityFilter, setRarityFilter] = useState('');
+  const [stockFilter, setStockFilter] = useState('');
+  const [publicationFilter, setPublicationFilter] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [selectedCardIds, setSelectedCardIds] = useState([]);
+  const [bulkQuantity, setBulkQuantity] = useState('');
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const selectAllVisibleRef = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -697,9 +756,181 @@ function ConnectedAdmin() {
     isAdmin &&
     cardsState?.userId === userId &&
     cardsState.refreshKey === refreshKey;
-  const cards = hasCurrentCards ? cardsState.cards : [];
+  const cards = hasCurrentCards ? cardsState.cards : EMPTY_CARDS;
   const cardsLoading = isAdmin && !hasCurrentCards;
   const cardsError = hasCurrentCards ? cardsState.error : '';
+  const games = useMemo(() => uniqueSorted(cards.map((card) => card.game)), [cards]);
+  const sets = useMemo(
+    () =>
+      uniqueSorted(
+        cards
+          .filter((card) => !gameFilter || card.game === gameFilter)
+          .map((card) => card.set),
+      ),
+    [cards, gameFilter],
+  );
+  const rarities = useMemo(
+    () =>
+      uniqueSorted(
+        cards
+          .filter((card) => !gameFilter || card.game === gameFilter)
+          .map((card) => card.rarity),
+      ),
+    [cards, gameFilter],
+  );
+  const filteredCards = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase();
+    const result = cards.filter((card) => {
+      const matchesQuery =
+        !query ||
+        [card.name, card.game, card.set, card.no, card.rarity, card.cardType]
+          .join(' ')
+          .toLocaleLowerCase()
+          .includes(query);
+
+      return (
+        matchesQuery &&
+        (!gameFilter || card.game === gameFilter) &&
+        (!setFilter || card.set === setFilter) &&
+        (!rarityFilter || card.rarity === rarityFilter) &&
+        (!stockFilter ||
+          (stockFilter === 'in-stock' ? card.qty > 0 : card.qty === 0)) &&
+        (!publicationFilter ||
+          card.isPublished === (publicationFilter === 'published'))
+      );
+    });
+
+    return result.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'price-ascending':
+          return a.price - b.price;
+        case 'price-descending':
+          return b.price - a.price;
+        case 'stock-ascending':
+          return a.qty - b.qty;
+        case 'stock-descending':
+          return b.qty - a.qty;
+        default:
+          return b.id - a.id;
+      }
+    });
+  }, [
+    cards,
+    gameFilter,
+    publicationFilter,
+    rarityFilter,
+    searchQuery,
+    setFilter,
+    sortBy,
+    stockFilter,
+  ]);
+  const hasFilters =
+    searchQuery ||
+    gameFilter ||
+    setFilter ||
+    rarityFilter ||
+    stockFilter ||
+    publicationFilter ||
+    sortBy !== 'newest';
+  const availableCardIds = useMemo(
+    () => new Set(cards.map((card) => card.id)),
+    [cards],
+  );
+  const selectedIdSet = useMemo(
+    () =>
+      new Set(
+        selectedCardIds.filter((cardId) => availableCardIds.has(cardId)),
+      ),
+    [availableCardIds, selectedCardIds],
+  );
+  const selectedCards = cards.filter((card) => selectedIdSet.has(card.id));
+  const selectedCardLabel = selectedCards.length === 1 ? 'card' : 'cards';
+  const visibleSelectedCount = filteredCards.reduce(
+    (count, card) => count + (selectedIdSet.has(card.id) ? 1 : 0),
+    0,
+  );
+  const allVisibleSelected =
+    filteredCards.length > 0 && visibleSelectedCount === filteredCards.length;
+  const partiallyVisibleSelected =
+    visibleSelectedCount > 0 && !allVisibleSelected;
+  const parsedBulkQuantity = Number(bulkQuantity);
+  const validBulkQuantity =
+    /^\d+$/.test(bulkQuantity) &&
+    Number.isSafeInteger(parsedBulkQuantity) &&
+    parsedBulkQuantity <= 2147483647;
+
+  useEffect(() => {
+    if (selectAllVisibleRef.current) {
+      selectAllVisibleRef.current.indeterminate = partiallyVisibleSelected;
+    }
+  }, [partiallyVisibleSelected]);
+
+  function clearFilters() {
+    setSearchQuery('');
+    setGameFilter('');
+    setSetFilter('');
+    setRarityFilter('');
+    setStockFilter('');
+    setPublicationFilter('');
+    setSortBy('newest');
+  }
+
+  function toggleVisibleSelection(checked) {
+    const visibleIds = new Set(filteredCards.map((card) => card.id));
+    setSelectedCardIds((current) => {
+      const currentCatalogIds = current.filter((cardId) =>
+        availableCardIds.has(cardId),
+      );
+      return checked
+        ? [...new Set([...currentCatalogIds, ...visibleIds])]
+        : currentCatalogIds.filter((cardId) => !visibleIds.has(cardId));
+    });
+  }
+
+  async function applyBulkUpdate(values, successMessage) {
+    const ids = selectedCards.map((card) => card.id);
+    if (!ids.length) return;
+
+    setBulkBusy(true);
+    setNotice(null);
+
+    try {
+      const { count, data, error } = await supabase
+        .from('cards')
+        .update(
+          { ...values, updated_at: new Date().toISOString() },
+          { count: 'exact' },
+        )
+        .in('id', ids)
+        .select('id');
+
+      if (error) throw error;
+
+      const updatedCount = count ?? data?.length ?? 0;
+      setSelectedCardIds([]);
+      setRefreshKey((key) => key + 1);
+
+      if (updatedCount !== ids.length) {
+        setNotice({
+          kind: 'error',
+          text: `Only ${updatedCount} of ${ids.length} selected cards were updated. The list has been refreshed; review the remaining items.`,
+        });
+      } else {
+        setNotice({ kind: 'success', text: successMessage });
+      }
+    } catch (error) {
+      setNotice({ kind: 'error', text: messageFromError(error) });
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  function exportCardsCsv() {
+    downloadCardsCsv(cards);
+    setNotice({ kind: 'success', text: `Exported ${cards.length} cards to CSV.` });
+  }
 
   if (authLoading) {
     return (
@@ -792,22 +1023,213 @@ function ConnectedAdmin() {
               <p className="admin-kicker">INVENTORY</p>
               <h2>{cards.length} {cards.length === 1 ? 'card' : 'cards'}</h2>
             </div>
+            <div className="admin-listing-actions">
+              <button
+                className="admin-button"
+                type="button"
+                disabled={!cards.length || cardsLoading}
+                onClick={exportCardsCsv}
+              >
+                Export CSV
+              </button>
+              <button
+                className="admin-button primary"
+                type="button"
+                onClick={() => setCreatingCard(true)}
+              >
+                + New listing
+              </button>
+            </div>
+          </div>
+
+          <div className="admin-listing-filters">
+            <label className="admin-filter-search">
+              Search cards
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Name, game, set, number, rarity…"
+              />
+            </label>
+            <label>
+              Game
+              <select
+                value={gameFilter}
+                onChange={(event) => {
+                  setGameFilter(event.target.value);
+                  setSetFilter('');
+                  setRarityFilter('');
+                }}
+              >
+                <option value="">All games</option>
+                {games.map((game) => (
+                  <option key={game} value={game}>{game}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Set
+              <select
+                value={setFilter}
+                onChange={(event) => setSetFilter(event.target.value)}
+              >
+                <option value="">All sets</option>
+                {sets.map((set) => (
+                  <option key={set} value={set}>{set}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Rarity
+              <select
+                value={rarityFilter}
+                onChange={(event) => setRarityFilter(event.target.value)}
+              >
+                <option value="">All rarities</option>
+                {rarities.map((rarity) => (
+                  <option key={rarity} value={rarity}>{rarity}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Stock
+              <select
+                value={stockFilter}
+                onChange={(event) => setStockFilter(event.target.value)}
+              >
+                <option value="">Any stock</option>
+                <option value="in-stock">In stock</option>
+                <option value="out-of-stock">Out of stock</option>
+              </select>
+            </label>
+            <label>
+              Publication
+              <select
+                value={publicationFilter}
+                onChange={(event) => setPublicationFilter(event.target.value)}
+              >
+                <option value="">Any status</option>
+                <option value="published">Published</option>
+                <option value="hidden">Hidden</option>
+              </select>
+            </label>
+            <label>
+              Sort by
+              <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                <option value="newest">Newest first</option>
+                <option value="name">Name A–Z</option>
+                <option value="price-ascending">Price: low to high</option>
+                <option value="price-descending">Price: high to low</option>
+                <option value="stock-ascending">Stock: low to high</option>
+                <option value="stock-descending">Stock: high to low</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="admin-filter-summary">
+            <p>
+              Showing {filteredCards.length} of {cards.length}{' '}
+              {cards.length === 1 ? 'listing' : 'listings'}
+            </p>
             <button
-              className="admin-button primary"
-              onClick={() => setCreatingCard(true)}
+              className="admin-text-button"
+              type="button"
+              onClick={clearFilters}
+              disabled={!hasFilters}
             >
-              + New listing
+              Clear filters
             </button>
           </div>
+
+          {selectedCards.length > 0 && (
+            <div className="admin-bulk-toolbar" role="toolbar" aria-label="Bulk actions for selected cards">
+              <p>
+                <strong>{selectedCards.length}</strong>{' '}
+                {selectedCardLabel} selected
+              </p>
+              <div className="admin-bulk-actions">
+                <button
+                  className="admin-button"
+                  type="button"
+                  disabled={bulkBusy}
+                  onClick={() =>
+                    applyBulkUpdate(
+                      { is_published: true },
+                      `Published ${selectedCards.length} ${selectedCardLabel}.`,
+                    )
+                  }
+                >
+                  Publish selected
+                </button>
+                <button
+                  className="admin-button"
+                  type="button"
+                  disabled={bulkBusy}
+                  onClick={() =>
+                    applyBulkUpdate(
+                      { is_published: false },
+                      `Hid ${selectedCards.length} ${selectedCardLabel}.`,
+                    )
+                  }
+                >
+                  Hide selected
+                </button>
+                <label className="admin-bulk-stock">
+                  Set stock to
+                  <input
+                    type="number"
+                    min="0"
+                    max="2147483647"
+                    step="1"
+                    value={bulkQuantity}
+                    onChange={(event) => setBulkQuantity(event.target.value)}
+                  />
+                </label>
+                <button
+                  className="admin-button"
+                  type="button"
+                  disabled={bulkBusy || !validBulkQuantity}
+                  onClick={() =>
+                    applyBulkUpdate(
+                      { quantity: parsedBulkQuantity },
+                      `Stock updated for ${selectedCards.length} ${selectedCardLabel}.`,
+                    )
+                  }
+                >
+                  Apply stock
+                </button>
+                <button
+                  className="admin-text-button"
+                  type="button"
+                  disabled={bulkBusy}
+                  onClick={() => setSelectedCardIds([])}
+                >
+                  Clear selection
+                </button>
+              </div>
+            </div>
+          )}
 
           {cardsError && <p className="admin-alert error">{cardsError}</p>}
           {cardsLoading ? (
             <p className="admin-loading">Loading cards…</p>
-          ) : cards.length ? (
+          ) : filteredCards.length ? (
             <div className="admin-table-wrap">
               <table className="admin-table">
                 <thead>
                   <tr>
+                    <th scope="col" className="admin-select-column">
+                      <input
+                        ref={selectAllVisibleRef}
+                        type="checkbox"
+                        checked={allVisibleSelected}
+                        onChange={(event) =>
+                          toggleVisibleSelection(event.target.checked)
+                        }
+                        aria-label="Select all visible listings"
+                      />
+                    </th>
                     <th scope="col">Card</th>
                     <th scope="col">Game / set</th>
                     <th scope="col">Price</th>
@@ -817,8 +1239,33 @@ function ConnectedAdmin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {cards.map((card) => (
-                    <tr key={card.id}>
+                  {filteredCards.map((card) => (
+                    <tr
+                      key={card.id}
+                      className={
+                        selectedIdSet.has(card.id) ? 'admin-row-selected' : undefined
+                      }
+                    >
+                      <td className="admin-select-column">
+                        <input
+                          type="checkbox"
+                          checked={selectedIdSet.has(card.id)}
+                          onChange={(event) => {
+                            const checked = event.target.checked;
+                            setSelectedCardIds((current) => {
+                              const currentCatalogIds = current.filter(
+                                (cardId) => availableCardIds.has(cardId),
+                              );
+                              return checked
+                                ? [...new Set([...currentCatalogIds, card.id])]
+                                : currentCatalogIds.filter(
+                                    (cardId) => cardId !== card.id,
+                                  );
+                            });
+                          }}
+                          aria-label={`Select ${card.name}`}
+                        />
+                      </td>
                       <td>
                         <div className="admin-card-cell">
                           {card.img ? (
@@ -877,7 +1324,11 @@ function ConnectedAdmin() {
               </table>
             </div>
           ) : (
-            <p className="admin-empty">No cards yet. Add your first listing.</p>
+            <p className="admin-empty">
+              {cards.length
+                ? 'No cards match these filters. Try changing or clearing them.'
+                : 'No cards yet. Add your first listing.'}
+            </p>
           )}
         </section>
       </div>

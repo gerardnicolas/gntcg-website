@@ -333,7 +333,7 @@ function Storefront() {
   }
 
   const currentGame = GAMES[activeGame];
-  const availableCards = CARDS.filter(
+  const availableCards = cards.filter(
     (card) => card.game === currentGame.name,
   ).length;
 
