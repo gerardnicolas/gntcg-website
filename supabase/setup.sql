@@ -103,11 +103,6 @@ set public = excluded.public,
     allowed_mime_types = excluded.allowed_mime_types;
 
 drop policy if exists "Public can view card images" on storage.objects;
-create policy "Public can view card images"
-  on storage.objects
-  for select
-  to anon, authenticated
-  using (bucket_id = 'card-images');
 
 drop policy if exists "Admins can upload card images" on storage.objects;
 create policy "Admins can upload card images"
