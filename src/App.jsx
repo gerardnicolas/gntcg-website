@@ -29,14 +29,23 @@ const GAMES = {
   },
 };
 
+function gameFromPath() {
+  const path = window.location.pathname.replace(/\/+$/, '').slice(1);
+  return GAMES[path] ? path : '';
+}
+
 function gameFromHash() {
   const hash = window.location.hash.slice(1);
-  return hash === 'riftbound' || hash === 'braverse' ? hash : '';
+  return GAMES[hash] ? hash : '';
+}
+
+function gameFromLocation() {
+  return gameFromPath() || gameFromHash();
 }
 
 function Storefront() {
   const [search, setSearch] = useState('');
-  const [activeGame, setActiveGame] = useState(gameFromHash);
+  const [activeGame, setActiveGame] = useState(gameFromLocation);
   const [selectedSet, setSelectedSet] = useState('');
   const [sort, setSort] = useState('new');
   const [cards, setCards] = useState(supabase ? [] : CARDS);
@@ -91,14 +100,19 @@ function Storefront() {
   }, []);
 
   useEffect(() => {
-    function syncGameFromHash() {
-      setActiveGame(gameFromHash());
+    const legacyGame = gameFromHash();
+    if (!gameFromPath() && legacyGame && window.location.pathname === '/') {
+      window.history.replaceState(null, '', `/${legacyGame}`);
+    }
+
+    function syncGameFromLocation() {
+      setActiveGame(gameFromLocation());
       setSearch('');
       setSelectedSet('');
     }
 
-    window.addEventListener('hashchange', syncGameFromHash);
-    return () => window.removeEventListener('hashchange', syncGameFromHash);
+    window.addEventListener('popstate', syncGameFromLocation);
+    return () => window.removeEventListener('popstate', syncGameFromLocation);
   }, []);
 
   useEffect(() => {
@@ -217,7 +231,7 @@ function Storefront() {
       <div className="home-page">
         <div className="home-wrap">
           <nav className="home-nav" aria-label="Main navigation">
-            <a className="home-brand" href="#home">
+            <a className="home-brand" href="/">
               <span className="brand-mark">G</span>
               <span>GN TCG</span>
             </a>
@@ -255,7 +269,7 @@ function Storefront() {
                 return (
                   <a
                     className={`game-choice ${game.cardClass}`}
-                    href={`#${key}`}
+                    href={`/${key}`}
                     key={key}
                   >
                     <div className="game-art" aria-hidden="true">
@@ -341,7 +355,7 @@ function Storefront() {
     <>
       <nav className="catalog-nav" aria-label="Game navigation">
         <div className="wrap">
-          <a className="catalog-brand" href="#home">
+          <a className="catalog-brand" href="/">
             <span className="brand-mark">G</span>
             <span>GN TCG</span>
           </a>
@@ -350,7 +364,7 @@ function Storefront() {
               <a
                 aria-current={activeGame === key ? 'page' : undefined}
                 className={activeGame === key ? 'active' : ''}
-                href={`#${key}`}
+                href={`/${key}`}
                 key={key}
               >
                 {game.shortName}
