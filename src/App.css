@@ -889,6 +889,179 @@ header.top::after {
   color: var(--ink);
 }
 
+.modal-backdrop .inquiry-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: min(600px, calc(100vw - 24px));
+  max-height: min(90vh, 760px);
+  max-height: min(90dvh, 760px);
+  padding: 0;
+  overflow: hidden;
+}
+
+.inquiry-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 22px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.inquiry-header h2 {
+  margin: 0;
+}
+
+.inquiry-count {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.inquiry-header .x {
+  flex: 0 0 auto;
+  margin: -6px -10px -6px 0;
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.inquiry-header .x:hover {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.inquiry-header .x:focus-visible,
+.inquiry-preview summary:focus-visible {
+  outline: 2px solid var(--ok);
+  outline-offset: 2px;
+}
+
+.inquiry-items {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 14px 22px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-color: rgba(185, 203, 194, 0.4) transparent;
+  scrollbar-width: thin;
+}
+
+.inquiry-items::-webkit-scrollbar {
+  width: 8px;
+}
+
+.inquiry-items::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.inquiry-items::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(185, 203, 194, 0.4);
+  background-clip: padding-box;
+}
+
+.inquiry-items::-webkit-scrollbar-thumb:hover {
+  background: rgba(185, 203, 194, 0.65);
+  background-clip: padding-box;
+}
+
+.inquiry-items .line {
+  flex: 0 0 auto;
+  padding: 11px 12px;
+  background: var(--surface);
+}
+
+.inquiry-line .quantity-control {
+  flex: 0 0 auto;
+}
+
+.inquiry-line .line-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.inquiry-line .line-price small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.inquiry-footer {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 12px;
+  padding: 14px 22px max(16px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.inquiry-footer .total {
+  align-items: baseline;
+  gap: 12px;
+}
+
+.inquiry-preview summary {
+  width: fit-content;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inquiry-preview[open] textarea {
+  display: block;
+  max-height: 22vh;
+  min-height: 90px;
+  margin-top: 8px;
+  overflow-y: auto;
+  resize: vertical;
+}
+
+.inquiry-dialog .actions {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 10px;
+}
+
+.inquiry-dialog .actions .inq-btn,
+.inquiry-dialog .actions .add {
+  width: 100%;
+  min-width: 0;
+}
+
+.inquiry-empty {
+  margin: 0 !important;
+  padding: 24px 22px;
+}
+
+@media (max-width: 560px) {
+  .inquiry-header {
+    padding: 12px 16px 10px;
+  }
+
+  .inquiry-items {
+    padding: 12px 16px;
+  }
+
+  .inquiry-footer {
+    gap: 10px;
+    padding: 12px 16px max(14px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .inquiry-dialog .actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 footer {
   border-top: 1px solid rgba(255, 255, 255, 0.09);
   padding: 32px 0;
