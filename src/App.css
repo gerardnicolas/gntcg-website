@@ -1709,7 +1709,7 @@ footer a {
   flex-wrap: wrap;
 }
 
-.admin-bulk-stock {
+.admin-bulk-field {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -1718,7 +1718,7 @@ footer a {
   font-weight: 700;
 }
 
-.admin-bulk-stock input {
+.admin-bulk-field input {
   width: 88px;
   min-height: 42px;
   padding: 8px 10px;
@@ -1729,7 +1729,11 @@ footer a {
   font: inherit;
 }
 
-.admin-bulk-stock input:focus-visible,
+.admin-bulk-price input {
+  width: 112px;
+}
+
+.admin-bulk-field input:focus-visible,
 .admin-select-column input:focus-visible {
   outline: 2px solid var(--ok);
   outline-offset: 2px;

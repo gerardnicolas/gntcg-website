@@ -472,6 +472,7 @@ function ConnectedAdmin() {
   const [sortBy, setSortBy] = useState('newest');
   const [selectedCardIds, setSelectedCardIds] = useState([]);
   const [bulkQuantity, setBulkQuantity] = useState('');
+  const [bulkPrice, setBulkPrice] = useState('');
   const [bulkBusy, setBulkBusy] = useState(false);
   const selectAllVisibleRef = useRef(null);
 
@@ -860,6 +861,11 @@ function ConnectedAdmin() {
     /^\d+$/.test(bulkQuantity) &&
     Number.isSafeInteger(parsedBulkQuantity) &&
     parsedBulkQuantity <= 2147483647;
+  const parsedBulkPrice = Number(bulkPrice);
+  const validBulkPrice =
+    /^\d+(\.\d{1,2})?$/.test(bulkPrice) &&
+    Number.isFinite(parsedBulkPrice) &&
+    parsedBulkPrice <= 99999999.99;
 
   useEffect(() => {
     if (selectAllVisibleRef.current) {
@@ -1175,7 +1181,7 @@ function ConnectedAdmin() {
                 >
                   Hide selected
                 </button>
-                <label className="admin-bulk-stock">
+                <label className="admin-bulk-field">
                   Set stock to
                   <input
                     type="number"
@@ -1198,6 +1204,31 @@ function ConnectedAdmin() {
                   }
                 >
                   Apply stock
+                </button>
+                <label className="admin-bulk-field admin-bulk-price">
+                  Set price (PHP) to
+                  <input
+                    type="number"
+                    min="0"
+                    max="99999999.99"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={bulkPrice}
+                    onChange={(event) => setBulkPrice(event.target.value)}
+                  />
+                </label>
+                <button
+                  className="admin-button"
+                  type="button"
+                  disabled={bulkBusy || !validBulkPrice}
+                  onClick={() =>
+                    applyBulkUpdate(
+                      { price: parsedBulkPrice },
+                      `Price updated for ${selectedCards.length} ${selectedCardLabel}.`,
+                    )
+                  }
+                >
+                  Apply price
                 </button>
                 <button
                   className="admin-text-button"
